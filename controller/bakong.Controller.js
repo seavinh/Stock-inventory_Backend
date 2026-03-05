@@ -112,8 +112,12 @@ const checkPaymentStatus = async (req, res) => {
                 saleItemId: saleItemsIds
             });
 
+            const populatedSale = await Sale.findById(newSaleId).populate({
+                path: 'saleItemId',
+                populate: { path: 'productId', select: 'productName price img' }
+            }).populate('userId', 'userName role');
 
-            return res.status(200).json({ isPaid: true, message: 'Payment confirmed & Sale created.', sale: newSale });
+            return res.status(200).json({ isPaid: true, message: 'Payment confirmed & Sale created.', sale: populatedSale });
         }
 
         res.status(200).json({ isPaid: false, message: 'Payment not yet received.' });

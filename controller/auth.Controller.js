@@ -3,7 +3,7 @@ const User = require('../models/usersModel');
 
 // Generate token
 const generateToken = (id) => {
-    return jwt.sign({id}, process.env.JWT_SECRET, {
+    return jwt.sign({ id }, process.env.JWT_SECRET, {
         expiresIn: '1d',
     });
 };
@@ -43,8 +43,8 @@ const registerUser = async (req, res) => {
 
 // Login user controller
 const loginUser = async (req, res) => {
-    const {userName, password} = req.body;
-    
+    const { userName, password } = req.body;
+
     try {
         // Validate input
         if (!userName || !password) {
@@ -54,17 +54,24 @@ const loginUser = async (req, res) => {
         }
 
         // Find user
-        const user = await User.findOne({userName});
-        
+        const user = await User.findOne({ userName });
+
         if (!user) {
             return res.status(401).json({
                 message: 'Invalid credentials'
             });
         }
 
+        // Check if user is active
+        if (user.isActive === false) {
+            return res.status(403).json({
+                message: 'Your account has been disabled. Please contact the admin.'
+            });
+        }
+
         // Check password
         const isPasswordCorrect = await user.matchPassword(password);
-        
+
         if (!isPasswordCorrect) {
             return res.status(401).json({
                 message: 'Invalid credentials'
@@ -82,11 +89,11 @@ const loginUser = async (req, res) => {
             role: user.role,
             token: token,
         });
-        
-    } catch(error) {
+
+    } catch (error) {
         console.error('❌ Login error:', error);
-        return res.status(500).json({message: error.message});
+        return res.status(500).json({ message: error.message });
     }
 };
 
-module.exports = {registerUser, loginUser};
+module.exports = { registerUser, loginUser };

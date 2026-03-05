@@ -83,7 +83,7 @@ const createSaleWithItems = async (req, res) => {
     const populatedSale = await Sale.findById(sale._id).populate({
       path: 'saleItemId',
       populate: { path: 'productId', select: 'productName price img' }
-    });
+    }).populate('userId', 'userName role');
 
     res.status(201).json({
       message: "Sale created successfully!",

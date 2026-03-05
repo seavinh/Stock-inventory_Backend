@@ -14,6 +14,12 @@ const protect = async (req, res, next) => {
                 return res.status(401).json({ message: 'User not found' });
             }
 
+            // DYNAMIC LOGIN & ACTIVE CHECK: 
+            // If the user's account was disabled by admin while they hold a local token, instantly block their requests.
+            if (req.user.isActive === false) {
+                return res.status(403).json({ message: 'Your account has been disabled. Please contact the admin.' });
+            }
+
             return next();
         }
 

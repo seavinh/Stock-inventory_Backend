@@ -8,7 +8,7 @@ let currentUserRole = null;
 // Create a new user (only admin)
 const createdUser = async (req, res) => {
   try {
-    if (currentUserRole !== 'admin') {
+    if (req.user.role !== 'admin') {
       return res.status(403).json({ message: 'Only admin can create users' });
     }
     const user = new User({ ...req.body });
@@ -25,6 +25,7 @@ const loginUser = async (req, res) => {
     const { userName, password } = req.body;
     const user = await User.findOne({ userName });
     if (!user) return res.status(404).json({ message: 'User not found' });
+    if (user.isActive === false) return res.status(403).json({ message: 'Your account has been disabled. Please contact the admin.' });
     const checkPassword = await bcrypt.compare(password, user.password);
     if (!checkPassword) return res.status(400).json({ message: 'Wrong password' });
     currentUserRole = user.role;
@@ -74,11 +75,25 @@ const getUserById = async (req, res) => {
 // Update user (admin only)
 const updateUserById = async (req, res) => {
   try {
-    if (currentUserRole !== 'admin') {
+    if (req.user.role !== 'admin') {
       return res.status(403).json({ message: 'Only admin can update users' });
     }
-    const updatedUser = await User.findByIdAndUpdate(req.params.id, req.body, { new: true }).select('-password');
-    if (!updatedUser) return res.status(404).json({ message: 'User not found' });
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    if (req.body.userName) user.userName = req.body.userName;
+    if (req.body.phoneNumber) user.phoneNumber = req.body.phoneNumber;
+    if (req.body.role) user.role = req.body.role;
+    if (req.body.isActive !== undefined) user.isActive = req.body.isActive;
+
+    // Explicitly update password if provided
+    if (req.body.password && req.body.password.trim() !== '') {
+      user.password = req.body.password;
+    }
+
+    await user.save();
+
+    const updatedUser = await User.findById(req.params.id).select('-password');
     res.status(200).json(updatedUser);
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -88,7 +103,7 @@ const updateUserById = async (req, res) => {
 // Delete user (admin only)
 const deleteUserById = async (req, res) => {
   try {
-    if (currentUserRole !== 'admin') {
+    if (req.user.role !== 'admin') {
       return res.status(403).json({ message: 'Only admin can delete users' });
     }
     const deletedUser = await User.findByIdAndDelete(req.params.id);
@@ -136,14 +151,33 @@ const updateProfile = async (req, res) => {
       if (!isMatch) {
         return res.status(400).json({ message: 'Current password is incorrect.' });
       }
-      const salt = await bcrypt.genSalt(10);
-      user.password = await bcrypt.hash(newPassword, salt);
+      // The pre('save') hook will handle hashing this
+      user.password = newPassword;
     }
 
     await user.save({ validateBeforeSave: false });
 
     const updatedUser = await User.findById(user._id).select('-password');
     res.status(200).json({ message: 'Profile updated successfully!', user: updatedUser });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+// ════════════════════════════════
+// UPDATE PROFILE IMAGE
+// ════════════════════════════════
+const updateProfileImage = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    if (!req.file) return res.status(400).json({ message: 'No image uploaded' });
+
+    user.profileImage = req.file.filename;
+    await user.save({ validateBeforeSave: false });
+
+    const updatedUser = await User.findById(user._id).select('-password');
+    res.status(200).json({ message: 'Profile image updated successfully!', user: updatedUser });
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
@@ -159,4 +193,5 @@ module.exports = {
   logoutUser,
   getProfile,
   updateProfile,
+  updateProfileImage,
 };

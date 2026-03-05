@@ -66,7 +66,8 @@ const generateQR = (amount, currencyCode = 'usd', billNumber = '') => {
         /** @type {MerchantInfo} */
         const merchantInfo = {
             merchantID: "1456",
-            bakongAccountID: "kakada_ung@bkrt",
+            // bakongAccountID: "bun_sengtri@bkrt",
+            bakongAccountID: "ou_seavinh@bkrt",
             merchantName: "Ou Seavinh",
             acquiringBank: "National Bank of Cambodia",
             mobileNumber: "855967960723",
