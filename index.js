@@ -6,7 +6,7 @@ const cors = require('cors');
 const PORT = process.env.PORT || 3000;
 
 //Database Connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/InventoryManagementSystem'), {
+mongoose.connect(process.env.MONGODB_URI || 'mongodb+srv://ouseavinh_db_user:cCfEbO2UKgikJ5OK@cluster0.jt8cof3.mongodb.net/InventoryManagementSystem'), {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 }
