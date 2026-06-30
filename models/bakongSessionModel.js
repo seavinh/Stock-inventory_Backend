@@ -41,6 +41,10 @@ const bakongSessionSchema = new mongoose.Schema({
         type: String,
         enum: ['pending', 'paid', 'expired'],
         default: 'pending'
+    },
+    saleId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Sale'
     }
 }, { timestamps: true });
 

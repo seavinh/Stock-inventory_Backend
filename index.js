@@ -1,38 +1,31 @@
-require('dotenv').config(); // Add this at the very top
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
-const app = express();
 const cors = require('cors');
+const { execSync } = require('child_process');
+
+const app = express();
 const PORT = process.env.PORT || 3000;
 
 //Database Connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb+srv://ouseavinh_db_user:cCfEbO2UKgikJ5OK@cluster0.jt8cof3.mongodb.net/InventoryManagementSystem', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-});
-app.use(cors())
-const db = mongoose.connection;
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/InventoryManagementSystem')
+  .then(() => console.log('Database Connected 📚 📚'))
+  .catch(err => {
+    console.error('❌ MongoDB connection failed:', err.message);
+    process.exit(1);
+  });
 
-db.once('open', () => {
-  console.log('Database Connected 📚 📚');
-});
-
-//Middleware
+app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static('uploads'));
-// Basic Route
 
+// Basic Route
 app.get('/', (req, res) => {
   res.send('Hello ,welcome to Inventory Management System API 🚀🚀');
 });
 
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT} 🏃🏃`);
-});
-
-//Routes  
-
+//Routes
 const userRoutes = require('./routes/user.route');
 app.use('/api/users', userRoutes);
 
@@ -51,15 +44,18 @@ app.use('/api/categories', categoryRoutes);
 const supplierRoute = require('./routes/supplier.route');
 app.use('/api/suppliers', supplierRoute);
 
-
-
-const saleRoute = require('./routes/sale.route')
+const saleRoute = require('./routes/sale.route');
 app.use('/api/sales', saleRoute);
 
 const purchaseRoutes = require('./routes/purchase.route');
-const { protect } = require('./middleware/auth');
-// const upload = require('./middleware/MulterConfig');
 app.use('/api/purchases', purchaseRoutes);
 
 const bakongRoutes = require('./routes/bakong.route');
 app.use('/api/bakong', bakongRoutes);
+
+// Kill any existing process on target port before starting
+
+
+app.listen(PORT, () => {
+  console.log(`Server is running on http://localhost:${PORT} 🏃🏃`);
+});

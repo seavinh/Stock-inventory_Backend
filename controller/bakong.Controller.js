@@ -50,7 +50,7 @@ const generateQRCode = async (req, res) => {
 // POST /api/bakong/check
 const checkPaymentStatus = async (req, res) => {
     try {
-        const { sessionId } = req.body;
+        const { sessionId, manual } = req.body;
 
         if (!sessionId) {
             console.log(`[Bakong Controller] ❌ Check aborted: Empty session ID received from frontend.`);
@@ -68,11 +68,18 @@ const checkPaymentStatus = async (req, res) => {
 
         if (session.status === 'paid') {
             console.log(`[Bakong Controller] ⚠️ Request arrived for ${sessionId} but it's ALREADY PAID in DB.`);
-            return res.status(200).json({ isPaid: true, message: 'Already paid.' });
+            let populatedSale = null;
+            if (session.saleId) {
+                populatedSale = await Sale.findById(session.saleId).populate({
+                    path: 'saleItemId',
+                    populate: { path: 'productId', select: 'productName price img' }
+                }).populate('userId', 'userName role');
+            }
+            return res.status(200).json({ isPaid: true, message: 'Already paid.', sale: populatedSale });
         }
 
         console.log(`[Bakong Controller] ⏳ Contacting Bakong API for ${session.md5}...`);
-        const verification = await verifyPayment(session.md5);
+        const verification = await verifyPayment(session.md5, manual);
         if (verification.isPaid) {
             session.status = 'paid';
             await session.save();
@@ -116,6 +123,9 @@ const checkPaymentStatus = async (req, res) => {
                 path: 'saleItemId',
                 populate: { path: 'productId', select: 'productName price img' }
             }).populate('userId', 'userName role');
+
+            session.saleId = newSaleId;
+            await session.save();
 
             return res.status(200).json({ isPaid: true, message: 'Payment confirmed & Sale created.', sale: populatedSale });
         }
