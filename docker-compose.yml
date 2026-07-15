@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  # MongoDB Database Service
+  db:
+    image: mongo:6.0
+    container_name: inventory-db
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - inventory-network
+
+  # Node.js Backend Service
+  backend:
+    image: ${DOCKER_USER:-ouseavinh}/inventorypro-api:latest
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: inventorypro-api
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - JWT_SECRET=${JWT_SECRET:-d9bb0e5da02fb2a7b050a5511ecbd2d89f1ee555e463768e9c8e3c8476a7b947e7e315707c4d571ab7135cafdd3faf5dd3c65b40a5be9cfa440198df0e78fcd7}
+      # Pointing to the local 'db' container by default. If using MongoDB Atlas, override this in your .env
+      - MONGODB_URI=${MONGODB_URI:-mongodb://db:27017/InventoryManagementSystem}
+      - BAKONG_ID=${BAKONG_ID:-raksa_em@bkrt}
+      - PHONE_NUMBER=${PHONE_NUMBER:-855967960723}
+      - MERCHANT_NAME=${MERCHANT_NAME:-Ou Seavinh}
+      - ACQUIRING_BANK=${ACQUIRING_BANK:-National Bank of Cambodia}
+      - BAKONG_TOKEN=${BAKONG_TOKEN:-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7ImlkIjoiNDk4YWNmNGYwZmJlNDQ2NCJ9LCJpYXQiOjE3ODQwMTY4NDUsImV4cCI6MTc5MTc5Mjg0NX0.7cLhAyTYoo4gl2x5vLKU1YqKZJ7Cp4gk1UoGHONZbhM}
+    depends_on:
+      - db
+    networks:
+      - inventory-network
+
+volumes:
+  mongo-data:
+    driver: local
+
+networks:
+  inventory-network:
+    driver: bridge

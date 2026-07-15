@@ -1,0 +1,8 @@
+node_modules
+npm-debug.log
+.env
+debug_bakong.txt
+.git
+.vscode
+Dockerfile
+.dockerignore

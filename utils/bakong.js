@@ -57,9 +57,9 @@ const generateQR = (amount, currencyCode = 'usd', billNumber = '') => {
     try {
         const bill = (billNumber || `INV${Date.now()}`).slice(0, 25);
 
-        const khrAmount = currencyCode === 'usd'
-            ? Math.round(amount * 4100)
-            : Math.round(amount);
+        const isKhr = currencyCode?.toLowerCase() === 'khr';
+        const selectedCurrency = isKhr ? CURRENCY.khr : CURRENCY.usd;
+        const selectedAmount = isKhr ? Math.round(amount) : Number(amount);
 
         const expirationTimestamp = Date.now() + 15 * 60 * 1000;
 
@@ -72,8 +72,8 @@ const generateQR = (amount, currencyCode = 'usd', billNumber = '') => {
             acquiringBank: process.env.ACQUIRING_BANK,
             mobileNumber: process.env.PHONE_NUMBER ,
             merchantCity: "Phnom Penh",
-            currency: CURRENCY.khr,
-            amount: khrAmount,
+            currency: selectedCurrency,
+            amount: selectedAmount,
             billNumber: bill,
             expirationTimestamp: expirationTimestamp
         };
